@@ -61,12 +61,17 @@ class Heater:
         # Load additional modules
         self.printer.load_object(config, "verify_heater %s" % (short_name,))
         self.printer.load_object(config, "pid_calibrate")
-        gcode = self.printer.lookup_object("gcode")
-        gcode.register_mux_command("SET_HEATER_TEMPERATURE", "HEATER",
+        self.gcode = self.printer.lookup_object("gcode")
+        self.gcode.register_mux_command("SET_HEATER_TEMPERATURE", "HEATER",
                                    short_name, self.cmd_SET_HEATER_TEMPERATURE,
                                    desc=self.cmd_SET_HEATER_TEMPERATURE_help)
         self.printer.register_event_handler("klippy:shutdown",
                                             self._handle_shutdown)
+        # Event notification
+        self.warm_temperature = 50.0
+        self.cool_temperature = 45.0
+        self.warm_even_in_effect = False
+
     def set_pwm(self, read_time, value):
         if self.target_temp <= 0. or read_time > self.verify_mainthread_time:
             value = 0.
@@ -91,6 +96,14 @@ class Heater:
             adj_time = min(time_diff * self.inv_smooth_time, 1.)
             self.smoothed_temp += temp_diff * adj_time
             self.can_extrude = (self.smoothed_temp >= self.min_extrude_temp)
+            if temp > self.warm_temperature and not self.warm_even_in_effect:
+                logging.debug(f"{self.name}: Temp: {temp}.1f @ {read_time}.3f")
+                self.printer.send_event("heaters:warm", self.name)
+                self.warm_even_in_effect = True
+            elif (temp < self.cool_temperature and self.warm_even_in_effect):
+                logging.debug(f"{self.name}: Temp: {temp}.1f @ {read_time}.3f")
+                self.printer.send_event("heaters:cool", self.name)
+                self.warm_even_in_effect = False
         #logging.debug("temp: %.3f %f = %f", read_time, temp)
     def _handle_shutdown(self):
         self.verify_mainthread_time = -999.
