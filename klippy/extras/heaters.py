@@ -97,13 +97,13 @@ class Heater:
             self.smoothed_temp += temp_diff * adj_time
             self.can_extrude = (self.smoothed_temp >= self.min_extrude_temp)
             if temp > self.warm_temperature and not self.warm_even_in_effect:
-                logging.debug(f"{self.name}: Temp: {temp}.1f @ {read_time}.3f")
-                self.printer.send_event("heaters:warm", self.name)
+                # self.gcode.respond_info(f"{self.name}: Temp: {temp}.1f @ {read_time}.3f") 
                 self.warm_even_in_effect = True
+                self.printer.send_event("heaters:hot", self.name)
             elif (temp < self.cool_temperature and self.warm_even_in_effect):
-                logging.debug(f"{self.name}: Temp: {temp}.1f @ {read_time}.3f")
-                self.printer.send_event("heaters:cool", self.name)
+                # self.gcode.respond_info(f"{self.name}: Temp: {temp}.1f @ {read_time}.3f")
                 self.warm_even_in_effect = False
+                self.printer.send_event("heaters:cool", self.name)
         #logging.debug("temp: %.3f %f = %f", read_time, temp)
     def _handle_shutdown(self):
         self.verify_mainthread_time = -999.

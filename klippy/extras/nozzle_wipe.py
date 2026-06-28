@@ -32,15 +32,18 @@ class NozzleWipe:
 
         # Do the wipe moves
         self.gcode.respond_info("Starting nozzle wipe...")
-        self.gcode.run_script_from_command(f"G1 Z{z+10:.3f} F600")
-        self.gcode.run_script_from_command(f"G1 X{x_start:.3f} Y{y:.3f} F600")
-        self.gcode.run_script_from_command(f"G1 Z{z:.3f} F600")
+        self.gcode.run_script_from_command(f"G1 Z{z+10:.3f} F9000")
+        self.gcode.run_script_from_command(f"G1 X{x_start:.3f} Y{y:.3f} F9000")
+        self.gcode.run_script_from_command(f"G1 Z{z:.3f} F9000")
 
         for i in range(passes):
             self.gcode.run_script_from_command(
                 f"G1 X{x_start:.3f} Y{y:.3f} F{speed*60:.0f}")
             self.gcode.run_script_from_command(
                 f"G1 X{x_end:.3f} Y{y:.3f} F{speed*60:.0f}")
+
+        self.gcode.run_script_from_command(f"G1 Z{z+10:.3f} F9000")
+        self.gcode.run_script_from_command("M400") # Wait for all commands to finish
 
         self.gcode.respond_info("Nozzle wipe done.")
 
